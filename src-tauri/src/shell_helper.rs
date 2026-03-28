@@ -1,5 +1,6 @@
 use crate::ai_translator;
 use anyhow::Result;
+use std::{thread, time::Duration};
 use tauri::AppHandle;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_shell::ShellExt;
@@ -18,18 +19,14 @@ pub async fn trans_and_replace_text(app: &AppHandle) -> Result<()> {
 
     if !settings.daily_mode {
         // 3. 如果是游戏模式 -> 显示翻译状态
-        let status_text = format!(
-            "DeepRant翻译中... ({}→{} | 场景:{} | 模式:{})",
-            settings.translation_from,
-            settings.translation_to,
-            settings.game_scene,
-            settings.translation_mode
-        );
-        app.clipboard().write_text(&status_text)?;
+        let status_text = "翻译中...";
+        app.clipboard().write_text(status_text)?;
+        thread::sleep(Duration::from_millis(120));
 
         // 4. 粘贴状态文本
         simulate_keyboard_shortcut(app, "a").await?;
         simulate_keyboard_shortcut(app, "v").await?;
+        thread::sleep(Duration::from_millis(650));
     }
 
     // 5. 调用AI翻译

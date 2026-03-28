@@ -10,8 +10,12 @@ export const log = async (...args) => {
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
 
-    console.log(...args); // 保持浏览器控制台的输出
-    await invoke('log_to_backend', { message }); // 发送到后端
+    console.log(...args);
+    try {
+        await invoke('log_to_backend', { message, level: 'debug' });
+    } catch (error) {
+        console.error('写入后端日志失败:', error);
+    }
 };
 
 /**
@@ -23,6 +27,10 @@ export const logError = async (...args) => {
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
 
-    console.error(...args); // 保持浏览器控制台的输出
-    await invoke('log_to_backend', { message: `[ERROR] ${message}` }); // 发送到后端
+    console.error(...args);
+    try {
+        await invoke('log_to_backend', { message, level: 'error' });
+    } catch (error) {
+        console.error('写入后端错误日志失败:', error);
+    }
 }; 

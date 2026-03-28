@@ -164,43 +164,225 @@ fn get_system_prompt(from: &str, to: &str, scene: &str, mode: &str, daily_mode: 
     )
 }
 
-fn get_model_config(settings: &crate::store::AppSettings) -> crate::store::ModelConfig {
-    match settings.model_type.as_str() {
-        "deepseek" => crate::store::ModelConfig {
-            auth: "sk-jleighwqdtyssxeycgmwxqrhbofpsbkhtobofxhbeyebupyh".to_string(),
-            api_url: "https://api.siliconflow.cn/v1/chat/completions".to_string(),
-            model_name: "deepseek-ai/DeepSeek-V3".to_string(),
-        },
-        "deepseek-R1" => crate::store::ModelConfig {
-            auth: "sk-jleighwqdtyssxeycgmwxqrhbofpsbkhtobofxhbeyebupyh".to_string(),
-            api_url: "https://api.siliconflow.cn/v1/chat/completions".to_string(),
-            model_name: "deepseek-ai/DeepSeek-R1".to_string(),
-        },
-        "stepfun" => crate::store::ModelConfig {
-            auth: "605JU1zU7cGmFp0ibbZlZZ3Qra3lRH7FDtpvICyf2pTrRrUaO6CQgW8p3sQatd5Wh".to_string(),
-            api_url: "https://api.stepfun.com/v1/chat/completions".to_string(),
-            model_name: "step-2-16k".to_string(),
-        },
-        "custom" => settings.custom_model.clone(),
-        _ => settings.custom_model.clone(),
+fn get_provider_config(settings: &crate::store::AppSettings) -> crate::store::ProviderConfig {
+    settings
+        .custom_providers
+        .iter()
+        .find(|provider| provider.id == settings.selected_provider_id)
+        .cloned()
+        .or_else(|| settings.custom_providers.first().cloned())
+        .or_else(|| {
+            settings
+                .custom_model
+                .as_ref()
+                .map(|model| crate::store::ProviderConfig {
+                    id: "provider-legacy".to_string(),
+                    name: "Legacy".to_string(),
+                    auth: model.auth.clone(),
+                    api_base_url: crate::api_endpoint::normalize_api_base_url(&model.api_url),
+                    request_mode: crate::api_endpoint::infer_request_mode(
+                        &model.api_url,
+                        &model.model_name,
+                    ),
+                    model_name: model.model_name.clone(),
+                })
+        })
+        .unwrap_or_else(|| crate::store::ProviderConfig {
+            id: "provider-fallback".to_string(),
+            name: "自定义服务商".to_string(),
+            auth: String::new(),
+            api_base_url: String::new(),
+            request_mode: "responses".to_string(),
+            model_name: String::new(),
+        })
+}
+
+fn build_custom_request_body(
+    provider_config: &crate::store::ProviderConfig,
+    system_prompt: &str,
+    original: &str,
+) -> Value {
+    if crate::api_endpoint::is_responses_endpoint(
+        &provider_config.api_base_url,
+        &provider_config.request_mode,
+    ) {
+        return json!({
+            "model": provider_config.model_name,
+            "instructions": system_prompt,
+            "input": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": original
+                        }
+                    ]
+                }
+            ],
+            "max_output_tokens": 300
+        });
+    }
+
+    if crate::api_endpoint::is_responses_model(&provider_config.model_name)
+        || provider_config
+            .model_name
+            .trim()
+            .to_ascii_lowercase()
+            .starts_with("gpt-4.1")
+    {
+        return json!({
+            "model": provider_config.model_name,
+            "messages": [
+                {
+                    "role": "developer",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": original
+                }
+            ],
+            "max_completion_tokens": 300,
+            "reasoning_effort": "low"
+        });
+    }
+
+    json!({
+        "model": provider_config.model_name,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": original
+            }
+        ],
+        "max_tokens": 300,
+        "temperature": 0.9,
+        "top_p": 0.7,
+        "n": 1,
+        "stream": false,
+        "presence_penalty": 0.3,
+        "frequency_penalty": -0.3
+    })
+}
+
+fn extract_chat_completion_text(response: &Value) -> Option<String> {
+    if let Some(text) = response
+        .get("choices")
+        .and_then(|choices| choices.as_array())
+        .and_then(|choices| choices.first())
+        .and_then(|choice| choice.get("message"))
+        .and_then(|message| message.get("content"))
+        .and_then(|content| content.as_str())
+    {
+        return Some(text.trim().to_string());
+    }
+
+    response
+        .get("choices")
+        .and_then(|choices| choices.as_array())
+        .and_then(|choices| choices.first())
+        .and_then(|choice| choice.get("message"))
+        .and_then(|message| message.get("content"))
+        .and_then(|content| content.as_array())
+        .and_then(|items| {
+            items.iter().find_map(|item| {
+                item.get("text")
+                    .and_then(|text| text.as_str())
+                    .map(|text| text.trim().to_string())
+            })
+        })
+}
+
+fn extract_responses_api_text(response: &Value) -> Option<String> {
+    if let Some(text) = response
+        .get("output_text")
+        .and_then(|output_text| output_text.as_str())
+    {
+        return Some(text.trim().to_string());
+    }
+
+    response
+        .get("output")
+        .and_then(|output| output.as_array())
+        .and_then(|items| {
+            items.iter().find_map(|item| {
+                item.get("content")
+                    .and_then(|content| content.as_array())
+                    .and_then(|content_items| {
+                        content_items.iter().find_map(|content_item| {
+                            let item_type = content_item
+                                .get("type")
+                                .and_then(|value| value.as_str())
+                                .unwrap_or_default();
+
+                            if item_type == "output_text" || item_type == "text" {
+                                content_item
+                                    .get("text")
+                                    .and_then(|text| text.as_str())
+                                    .map(|text| text.trim().to_string())
+                            } else {
+                                None
+                            }
+                        })
+                    })
+            })
+        })
+}
+
+fn sanitize_output_text(text: String) -> String {
+    let text = text.trim();
+    if let Some(end_pos) = text.find("</think>") {
+        text[(end_pos + 8)..].trim().to_string()
+    } else {
+        text.to_string()
     }
 }
 
 pub async fn translate_with_gpt(app: &AppHandle, original: &str) -> Result<String> {
     let settings = crate::store::get_settings(app)?;
-    println!("当前翻译设置:");
-    println!("- 源语言: {}", settings.translation_from);
-    println!("- 目标语言: {}", settings.translation_to);
-    println!("- 游戏场景: {}", settings.game_scene);
-    println!("- 翻译模式: {}", settings.translation_mode);
-    println!("- 日常模式: {}", settings.daily_mode);
-    println!("- 模型类型: {}", settings.model_type);
+    crate::logger::info(app, "translate", "开始处理翻译请求");
+    crate::logger::debug(
+        app,
+        "translate",
+        format!(
+            "翻译设置: from={} to={} scene={} mode={} daily_mode={} model_type={}",
+            settings.translation_from,
+            settings.translation_to,
+            settings.game_scene,
+            settings.translation_mode,
+            settings.daily_mode,
+            settings.model_type
+        ),
+    );
 
-    let model_config = get_model_config(&settings);
+    let provider_config = get_provider_config(&settings);
+    let model_config = provider_config.to_model_config();
+    let is_custom_model = settings.model_type == "custom";
 
-    println!("正在发送请求到: {}", model_config.api_url);
-    println!("使用的模型: {}", model_config.model_name);
-    println!("API密钥前缀: {}", &model_config.auth[..6]);
+    if is_custom_model
+        && (provider_config.auth.trim().is_empty()
+            || provider_config.api_base_url.trim().is_empty()
+            || provider_config.model_name.trim().is_empty())
+    {
+        crate::logger::warn(app, "translate", "自定义服务商配置不完整");
+        return Ok("[错误] 请先在 AI模型 中添加并配置自定义服务商、API Key 和模型名称".to_string());
+    }
+
+    let request_url = model_config.api_url.clone();
+
+    crate::logger::debug(app, "translate", format!("请求地址: {}", request_url));
+    crate::logger::info(
+        app,
+        "translate",
+        format!("使用模型: {}", model_config.model_name),
+    );
+    let auth_prefix: String = model_config.auth.chars().take(6).collect();
+    crate::logger::debug(app, "translate", format!("API密钥前缀: {}", auth_prefix));
 
     let system_prompt = get_system_prompt(
         &settings.translation_from,
@@ -212,21 +394,8 @@ pub async fn translate_with_gpt(app: &AppHandle, original: &str) -> Result<Strin
 
     let client = Client::new();
 
-    let request_body = if settings.model_type == "deepseek-R1" {
-        json!({
-            "model": model_config.model_name,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": original
-                }
-            ],
-            "max_tokens": 8000
-        })
+    let request_body = if is_custom_model {
+        build_custom_request_body(&provider_config, &system_prompt, original)
     } else {
         json!({
             "model": model_config.model_name,
@@ -251,7 +420,7 @@ pub async fn translate_with_gpt(app: &AppHandle, original: &str) -> Result<Strin
     };
 
     let response = match client
-        .post(&model_config.api_url)
+        .post(&request_url)
         .header("Content-Type", "application/json")
         .header("Authorization", format!("Bearer {}", model_config.auth))
         .json(&request_body)
@@ -261,14 +430,22 @@ pub async fn translate_with_gpt(app: &AppHandle, original: &str) -> Result<Strin
         Ok(resp) => match resp.json::<Value>().await {
             Ok(json) => {
                 // 先检查是否有错误信息
+                if let Some(error) = json
+                    .get("error")
+                    .and_then(|error| error.get("message"))
+                    .and_then(|message| message.as_str())
+                {
+                    crate::logger::warn(app, "translate", format!("API返回错误: {}", error));
+                    return Ok(format!("[错误] {}", error));
+                }
                 if let Some(error) = json.get("error_msg").and_then(|msg| msg.as_str()) {
-                    println!("API返回错误: {}", error);
+                    crate::logger::warn(app, "translate", format!("API返回错误: {}", error));
                     return Ok(format!("[错误] {}", error));
                 }
                 json
             }
             Err(e) => {
-                println!("解析响应JSON失败: {}", e);
+                crate::logger::error(app, "translate", format!("解析响应JSON失败: {}", e));
                 return Ok(format!("[错误] 服务器响应格式异常: {}", e));
             }
         },
@@ -279,35 +456,33 @@ pub async fn translate_with_gpt(app: &AppHandle, original: &str) -> Result<Strin
                 msg if msg.contains("certificate") => "SSL证书验证失败，请检查网络设置",
                 _ => "网络请求失败",
             };
-            println!("请求失败: {}", e);
+            crate::logger::error(app, "translate", format!("请求失败: {}", e));
             return Ok(format!("[错误] {}", error_msg));
         }
     };
 
     // 解析响应
-    println!("API响应原文: {:?}", response);
-    let translated = match response
-        .get("choices")
-        .and_then(|choices| choices.as_array())
-        .and_then(|choices| choices.first())
-        .and_then(|choice| choice.get("message"))
-        .and_then(|message| message.get("content"))
-        .and_then(|content| content.as_str())
-    {
-        Some(text) => {
-            let text = text.trim();
-            // 如果找到</think>标签，只保留其后内容
-            if let Some(end_pos) = text.find("</think>") {
-                text[(end_pos + 8)..].trim().to_string()
-            } else {
-                text.to_string()
-            }
-        }
+    crate::logger::debug(app, "translate", format!("API响应摘要: {}", response));
+    let translated = match if is_custom_model
+        && crate::api_endpoint::is_responses_endpoint(
+            &provider_config.api_base_url,
+            &provider_config.request_mode,
+        ) {
+        extract_responses_api_text(&response)
+    } else {
+        extract_chat_completion_text(&response)
+    } {
+        Some(text) => sanitize_output_text(text),
         None => {
-            println!("无法从响应中提取翻译结果: {:?}", response);
+            crate::logger::error(
+                app,
+                "translate",
+                format!("无法从响应中提取翻译结果: {}", response),
+            );
             return Ok("[错误] 服务器返回的数据格式异常".to_string());
         }
     };
 
+    crate::logger::info(app, "translate", "翻译请求处理完成");
     Ok(translated)
 }

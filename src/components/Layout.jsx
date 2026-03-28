@@ -19,13 +19,13 @@ export default function Layout({ children, activeItem, setActiveItem }) {
                 />
 
                 {/* 左侧固定宽度的侧边栏 */}
-                <div className="w-[200px] h-screen">
+                <div className="w-[190px] h-screen">
                     <Sidebar activeItem={activeItem} setActiveItem={setActiveItem} />
                 </div>
 
                 {/* 右侧内容区域 */}
-                <div className="flex-1 p-4">
-                    <div className="max-w-[1200px] mx-auto h-[calc(100vh-32px)] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 overflow-auto">
+                <div className="flex-1 p-3">
+                    <div className="max-w-[1240px] mx-auto h-[calc(100vh-24px)] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 overflow-auto">
                         {children}
                     </div>
                 </div>

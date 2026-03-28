@@ -1,13 +1,13 @@
 {
   "name": "deeprant",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
+    "tauri": "node ./scripts/run-tauri.js",
     "clean": "rm -rf src-tauri/target && rm -rf dist",
     "build:mac-arm": "tauri build --target aarch64-apple-darwin"
   },

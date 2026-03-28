@@ -1,7 +1,26 @@
+use crate::logger;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::AppHandle;
-use tauri::Manager;
+use tauri::{AppHandle, Emitter, Manager};
+
+const CHECK_UPDATE_EVENT: &str = "app://check-update";
+
+fn show_main_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        #[cfg(target_os = "macos")]
+        let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+
+        if let Err(error) = window.show() {
+            logger::warn(app, "tray", format!("显示主窗口失败: {}", error));
+        }
+
+        if let Err(error) = window.set_focus() {
+            logger::warn(app, "tray", format!("主窗口聚焦失败: {}", error));
+        }
+    } else {
+        logger::warn(app, "tray", "未找到主窗口");
+    }
+}
 
 pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     // let show_icon = Image::from_path("icons/window.png")?;
@@ -22,22 +41,21 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    #[cfg(target_os = "macos")]
-                    let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
-                    window.show().unwrap();
-                    window.set_focus().unwrap();
-                }
+                show_main_window(app);
             }
             "check_update" => {
-                println!("检查更新菜单项被点击");
+                logger::info(app, "tray", "托盘触发检查更新");
+                show_main_window(app);
+                if let Err(error) = app.emit(CHECK_UPDATE_EVENT, ()) {
+                    logger::error(app, "tray", format!("派发检查更新事件失败: {}", error));
+                }
             }
             "quit" => {
-                println!("quit menu item was clicked");
+                logger::info(app, "tray", "托盘触发退出应用");
                 app.exit(0);
             }
             _ => {
-                println!("menu item {:?} not handled", event.id);
+                logger::debug(app, "tray", format!("未处理的托盘菜单项: {:?}", event.id));
             }
         })
         .build(app)?;

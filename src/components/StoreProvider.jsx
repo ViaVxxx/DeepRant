@@ -11,9 +11,7 @@ export function StoreProvider({ children }) {
     useEffect(() => {
         const initStore = async () => {
             try {
-                const storeInstance = await load('store.json', {
-                    autoSave: 100
-                });
+                const storeInstance = await load('store.json');
                 setStore(storeInstance);
                 // 获取存储的设置，如果没有则使用默认值
                 const storedSettings = await storeInstance.get('settings');
@@ -36,17 +34,18 @@ export function StoreProvider({ children }) {
         try {
             await store.set('settings', updatedSettings);
             await store.save();
-            const storedSettings = await store.get('settings');
-            if (storedSettings) {
-                setSettings(storedSettings);
-            }
+            setSettings(updatedSettings);
         } catch (error) {
             console.error('更新设置失败:', error);
         }
     };
 
+    const replaceSettings = (nextSettings) => {
+        setSettings(nextSettings);
+    };
+
     return (
-        <StoreContext.Provider value={{ store, settings, updateSettings, loading }}>
+        <StoreContext.Provider value={{ store, settings, updateSettings, replaceSettings, loading }}>
             {children}
         </StoreContext.Provider>
     );

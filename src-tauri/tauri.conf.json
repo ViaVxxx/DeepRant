@@ -1,27 +1,26 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "DeepRant",
-  "version": "1.1.9",
+  "productName": "DeepRant - Via 二开版",
+  "version": "1.2.0",
   "identifier": "com.DeepRant.app",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1430",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "DeepRant",
+        "title": "DeepRant - Via 二开版",
         "width": 1280,
-        "height": 720,
-        "minWidth": 1280,
-        "maxWidth": 1280,
+        "height": 820,
+        "minWidth": 1100,
         "minHeight": 720,
-        "maxHeight": 720,
         "theme": "Light",
         "visible": true,
-        "decorations": true
+        "decorations": true,
+        "resizable": true
       }
     ]
   },
@@ -74,9 +73,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyRUQyRTlGMEZGRjZCNUQKUldSZGEvOFBueTd0RXB1eStiY2ovR1c0M2lIK0JzTXR0TW9nTjR1QXNsbU9VOGNndG12VHg5L3UK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGQTNBQTkyRkIxQzRGOUMKUldTY1R4ejdrcXFqSDZ1RUs5eDE4Sm5VZXdvZjhIajZoQnE5OHlGUmdjVjF6a2ZqR2dFUUE2cncK",
       "endpoints": [
-        "https://github.com/liseami/DeepRant/releases/latest/download/latest.json"
+        "https://github.com/ViaVxxx/DeepRant/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

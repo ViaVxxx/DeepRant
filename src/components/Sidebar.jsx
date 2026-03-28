@@ -1,27 +1,24 @@
-import { useState } from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import {
   HomeHLine,
   Settings02,
-  Translate,
-  UserUser01,
   InfoCircle,
-  GodlyWebsite,
+  Dock,
 } from '../icons';
 import appIcon from '../assets/app-icon.png';
 // import LoginModal from './LoginModal';
 
 const sidebarItems = [
   { name: '主页', icon: HomeHLine, id: 'home' },
-  { name: '模式', icon: Translate, id: 'translate' },
   { name: '常用语', icon: InfoCircle, id: 'phrases' },
-  { name: '能量', icon: GodlyWebsite, id: 'mana' },
   { name: 'AI模型', icon: Settings02, id: 'settings' },
+  { name: '日志', icon: Dock, id: 'logs' },
   { name: '关于', icon: InfoCircle, id: 'about' },
 ];
 
-export default function Sidebar({ activeItem, setActiveItem }) {
+function Sidebar({ activeItem, setActiveItem }) {
   // const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
@@ -38,7 +35,7 @@ export default function Sidebar({ activeItem, setActiveItem }) {
               className='object-cover w-[46px] h-[46px]'
             />
           </div>
-          <h3 className='text-[20px] font-semibold text-[#1a1a1a]'>DeepRant</h3>
+          <h3 className='text-[18px] font-semibold text-[#1a1a1a] leading-6'>DeepRant - Via 二开版</h3>
         </div>
       </div>
 
@@ -101,3 +98,5 @@ export default function Sidebar({ activeItem, setActiveItem }) {
     </div>
   );
 }
+
+export default memo(Sidebar);

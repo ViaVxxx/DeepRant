@@ -5,39 +5,12 @@ import { useStore } from '../../../components/StoreProvider';
 import { invoke } from '@tauri-apps/api/core'
 import { showSuccess, showError } from '../../../utils/toast';
 import { log, logError } from '../../../utils/log';
-
-const isMac = () => {
-    return navigator.userAgent.toLowerCase().includes('mac');
-};
-
-// 格式化修饰键显示
-const formatModifier = (key) => {
-    const modifierMap = {
-        'Control': isMac() ? '⌃' : 'Ctrl',
-        'Alt': isMac() ? '⌥' : 'Alt',
-        'Shift': '⇧',
-        'Meta': isMac() ? '⌘' : 'Win',
-    };
-    return modifierMap[key] || key;
-};
-
-// 获取按键的标准名称
-const getKeyName = (e) => {
-    // 处理修饰键
-    if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
-        return e.code;
-    }
-    // 处理普通键
-    return e.code;
-};
+import { formatPressedKeys, getKeyName } from '../../../utils/hotkeys';
 
 export default function HotkeyCard() {
     const [isRecording, setIsRecording] = useState(false);
     const [pressedKeys, setPressedKeys] = useState([]);
-    const { settings, updateSettings } = useStore();
-
-    // 初始化热键
-    const hotkey = settings?.trans_hotkey?.shortcut;
+    const { settings, replaceSettings } = useStore();
 
     // 用户按下键时
     const handleKeyDown = (e) => {
@@ -86,7 +59,7 @@ export default function HotkeyCard() {
                 });
                 // 更新成功后，重新获取最新的settings
                 const updatedSettings = await invoke('get_settings');
-                updateSettings(updatedSettings);
+                replaceSettings(updatedSettings);
                 showSuccess('翻译快捷键设置成功');
                 log('快捷键更新成功');
             } catch (err) {
@@ -134,12 +107,7 @@ export default function HotkeyCard() {
                     </motion.div>
                 );
             }
-            return pressedKeys.map(key => {
-                if (key.includes('Control') || key.includes('Alt') || key.includes('Shift') || key.includes('Meta')) {
-                    return formatModifier(key.replace('Left', '').replace('Right', ''));
-                }
-                return key.replace('Key', '').replace('Digit', '');
-            }).join(' + ');
+            return formatPressedKeys(pressedKeys);
         }
         let hotkey = settings?.trans_hotkey?.shortcut;
         return hotkey || '未设置';
@@ -148,7 +116,7 @@ export default function HotkeyCard() {
     return (
         <motion.button
             onClick={startRecording}
-            className="h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-sm"
+            className="h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -157,11 +125,11 @@ export default function HotkeyCard() {
                 <KeyboardAlt className="w-6 h-6 stroke-zinc-500" />
                 翻译快捷键
             </div>
-            <div className="flex-1 flex flex-col justify-between mt-4">
+            <div className="flex-1 flex flex-col justify-between mt-3">
                 <div className="text-sm text-zinc-400">
                     {isRecording ? '请按下新的快捷键组合，松开任意按键完成设置' : '点击设置快捷键'}
                 </div>
-                <div className="text-2xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <div className="text-[28px] font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
                     {getCurrentHotkeyDisplay()}
                 </div>
             </div>

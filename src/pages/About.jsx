@@ -1,12 +1,9 @@
 import { motion } from 'framer-motion';
-import { GamingPad, Globe, Translate, Github, AT } from '../icons';
+import { GamingPad, Server, AT } from '../icons';
 import DeveloperNote from '../components/DeveloperNote';
-import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/plugin-process';
-import { useStore } from '../components/StoreProvider';
-import { showSuccess, showError } from '../utils/toast';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { performUpdateCheck } from '../utils/updater';
 
 export default function About() {
     const [updateStatus, setUpdateStatus] = useState('idle');
@@ -24,51 +21,23 @@ export default function About() {
 
     const checkUpdate = async () => {
         try {
-            setUpdateStatus('checking');
-            const update = await check();
-
-            if (update) {
-                setUpdateStatus('downloading');
-                let downloaded = 0;
-                let contentLength = 0;
-
-                await update.downloadAndInstall((progress) => {
-                    if (progress.event === 'Started') {
-                        contentLength = progress.data.contentLength;
-                        showSuccess(`开始下载更新包 ${(contentLength / 1024 / 1024).toFixed(2)}MB`);
-                    } else if (progress.event === 'Progress') {
-                        downloaded = progress.data.chunkLength;
-                        const percent = ((downloaded / contentLength) * 100).toFixed(1);
-                        showSuccess(`下载进度: ${percent}%`, { duration: 1000 });
-                    } else if (progress.event === 'Finished') {
-                        showSuccess('下载完成，准备安装');
-                    }
-                });
-
-                setUpdateStatus('installed');
-                showSuccess('更新已完成，即将重启应用');
-                await relaunch();
-            } else {
-                showSuccess('当前已是最新版本');
-                setUpdateStatus('idle');
-            }
+            await performUpdateCheck({
+                onStatusChange: setUpdateStatus,
+            });
         } catch (error) {
             console.error('Update error:', error);
-            showError(`更新失败: ${error.message}`);
-            setUpdateStatus('error');
         }
     };
 
     return (
         <div className="h-full flex flex-col gap-6">
-            {/* 头部介绍区域 */}
             <motion.div
                 className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
             >
                 <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">关于 DeepRant</h1>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">关于 DeepRant - Via 二开版</h1>
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800">
                         <AT className="w-4 h-4 stroke-zinc-500" />
                         <span className="text-sm text-zinc-500">版本 {currentVersion}</span>
@@ -87,14 +56,12 @@ export default function About() {
                         </button>
                     </div>
                 </div>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                    DeepRant 是一款专为国际服游戏玩家打造的实时翻译工具，致力于打破语言壁垒，让全球玩家畅享跨语言交流的乐趣。
+                <p className="text-zinc-500 dark:text-zinc-400">
+                    当前程序为 ViaVxxx 基于 DeepRant 维护的二开版本，聚焦国际服游戏场景下的快捷翻译、常用语和自定义 API 能力。
                 </p>
             </motion.div>
 
-            {/* 特性卡片网格 */}
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* 开发者说 */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -103,7 +70,6 @@ export default function About() {
                     <DeveloperNote />
                 </motion.div>
 
-                {/* 游戏场景优化 */}
                 <motion.div
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
                     initial={{ opacity: 0, y: 20 }}
@@ -114,12 +80,11 @@ export default function About() {
                         <GamingPad className="w-6 h-6 stroke-zinc-500" />
                         游戏场景优化
                     </div>
-                    <div className="mt-4 text-sm text-zinc-400">
-                        针对不同游戏类型定制翻译策略，准确理解游戏术语和表达方式，让交流更加自然顺畅。
+                    <div className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                        保留原项目对 MOBA / FPS 等场景的翻译优化，继续服务游戏内的高频短句沟通。
                     </div>
                 </motion.div>
 
-                {/* 多语言支持 */}
                 <motion.div
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
                     initial={{ opacity: 0, y: 20 }}
@@ -127,14 +92,28 @@ export default function About() {
                     transition={{ delay: 0.3 }}
                 >
                     <div className="flex items-center gap-3 text-sm text-zinc-500">
-                        <Globe className="w-6 h-6 stroke-zinc-500" />
-                        全球语言支持
+                        <Server className="w-6 h-6 stroke-zinc-500" />
+                        二开增强能力
                     </div>
-                    <div className="mt-4 text-sm text-zinc-400">
-                        支持多种语言之间的互译，让来自世界各地的玩家都能无障碍交流。
+                    <div className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                        新增常用语增删改、自定义服务商模型拉取与日志排查能力，方便继续维护和定位问题。
                     </div>
                 </motion.div>
             </div>
+
+            <motion.div
+                className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+            >
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">版本说明</h2>
+                <div className="mt-4 space-y-2 text-sm leading-7 text-zinc-500 dark:text-zinc-400">
+                    <p>• 已将原独立的“说明”页面内容合并到“关于”页面，减少导航层级。</p>
+                    <p>• 已移除使用额度展示，当前版本聚焦翻译、常用语、自定义服务商和日志能力。</p>
+                    <p>• 当前版本继续保留游戏场景优化，并增强了二开维护与问题定位体验。</p>
+                </div>
+            </motion.div>
         </div>
     );
-} 
+}
