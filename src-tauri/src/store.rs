@@ -342,7 +342,7 @@ pub fn get_settings(app: &AppHandle) -> Result<AppSettings, anyhow::Error> {
     let store = app.store(STORE_FILENAME)?;
     let settings: Value = store
         .get("settings")
-        .expect("Failed to get value from store");
+        .ok_or_else(|| anyhow::anyhow!("未找到 settings 配置"))?;
 
     Ok(serde_json::from_value(settings)?)
 }

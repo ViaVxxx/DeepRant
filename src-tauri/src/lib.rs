@@ -218,13 +218,14 @@ pub fn run() {
         // opener插件
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            logger::info(&app.app_handle(), "app", "应用启动");
             // 初始化存储
             println!("Initializing...");
             match initialize_settings(&app.app_handle()) {
                 Ok(_) => logger::info(&app.app_handle(), "app", "应用设置初始化完成"),
                 Err(e) => logger::error(&app.app_handle(), "app", format!("初始化设置失败: {}", e)),
             }
+
+            logger::info(&app.app_handle(), "app", "应用启动");
 
             // 初始化所有快捷键
             println!("正在注册全局快捷键...");

@@ -1,6 +1,6 @@
 [package]
 name = "DeepRant"
-version = "1.2.0"
+version = "1.2.1"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -34,4 +34,3 @@ reqwest = { version = "0.12.12", features = ["json"] }
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-updater = "2"
-
