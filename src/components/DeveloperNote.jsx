@@ -16,7 +16,7 @@ export default function DeveloperNote() {
   }, []);
 
   return (
-    <div className='flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm'>
+    <div className='h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm'>
       <div className='flex items-center gap-3 text-sm text-zinc-500 mb-6'>
         <Coffee className='w-6 h-6 stroke-zinc-500' />
         开发者说

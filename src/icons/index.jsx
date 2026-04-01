@@ -605,3 +605,40 @@ export function XClose(props) {
     </svg>
   );
 }
+
+export function Sun(props) {
+  return (
+    <svg
+      {...props}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      width='24'
+      height='24'
+      fill='none'
+      stroke='currentColor'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth='2'>
+      <path d='M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77m10.6 10.6 1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77m10.6-10.6 1.77-1.77' />
+      <circle cx='12' cy='12' r='4' />
+    </svg>
+  );
+}
+
+export function Moon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      width='24'
+      height='24'
+      fill='none'
+      stroke='currentColor'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth='2'>
+      <path d='M21 12.79A9 9 0 1 1 11.21 3c-.02.25-.03.5-.03.75a9 9 0 0 0 9.07 9.04c.25 0 .5-.01.75-.03Z' />
+    </svg>
+  );
+}

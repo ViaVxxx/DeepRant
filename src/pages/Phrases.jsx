@@ -9,6 +9,7 @@ import {
     getHotkeySignatureFromKeys,
     getKeyName,
 } from '../utils/hotkeys';
+import { cardVariants } from '../utils/motion';
 
 const getKeysFromPhrase = (item) => [...item.hotkey.modifiers, item.hotkey.key].filter(Boolean);
 
@@ -399,26 +400,25 @@ export default function Phrases() {
     return (
         <div className="h-full flex flex-col gap-6 p-6">
             <motion.div
-                className="w-full bg-white rounded-2xl p-6 border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.28)] transition-colors duration-300"
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                custom={0}
             >
                 <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-zinc-900 mb-2">常用语</h1>
-                        <p className="text-sm text-zinc-500">
-                            支持自定义新增、删除、排序常用语，并为每条常用语配置独立快捷键。
-                        </p>
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">常用语</h1>
                     </div>
                     <button
                         onClick={addDraft}
-                        className="px-4 py-2 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+                        className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-800 text-white dark:text-zinc-100 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-black transition-colors"
                     >
                         新增常用语
                     </button>
                 </div>
 
-                <div className="grid grid-cols-[32px_minmax(0,1fr)_180px_230px] gap-4 px-1 pb-3 border-b border-zinc-200 text-sm font-medium text-zinc-500">
+                <div className="grid grid-cols-[32px_minmax(0,1fr)_180px_230px] gap-4 px-1 pb-3 border-b border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-500 dark:text-zinc-400">
                     <div />
                     <div>文字</div>
                     <div className="text-right">快捷键</div>
@@ -451,7 +451,7 @@ export default function Phrases() {
                             >
                                 <button
                                     type="button"
-                                    className="text-zinc-300 hover:text-zinc-500 cursor-grab active:cursor-grabbing text-lg"
+                                    className="text-zinc-300 dark:text-zinc-700 hover:text-zinc-500 dark:hover:text-zinc-400 cursor-grab active:cursor-grabbing text-lg"
                                     title="拖拽排序"
                                 >
                                     ⋮⋮
@@ -469,10 +469,10 @@ export default function Phrases() {
                                                 }))
                                             }
                                             placeholder="输入常用语内容"
-                                            className="w-full resize-none px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+                                            className="w-full resize-none px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
                                         />
                                     ) : (
-                                        <div className="text-zinc-900 leading-7 break-words pr-4">
+                                        <div className="text-zinc-900 dark:text-zinc-100 leading-7 break-words pr-4">
                                             {item.phrase}
                                         </div>
                                     )}
@@ -486,9 +486,9 @@ export default function Phrases() {
                                         className={`min-w-[120px] px-4 py-2 rounded-xl text-base font-bold border transition-colors ${
                                             item.isEditing
                                                 ? recordingId === item.id
-                                                    ? 'border-blue-400 bg-blue-50 text-blue-600'
-                                                    : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
-                                                : 'border-zinc-200 bg-zinc-100 text-zinc-500 cursor-default'
+                                                    ? 'border-zinc-700 bg-zinc-950 text-zinc-100'
+                                                    : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                                                : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-500 cursor-default'
                                         }`}
                                     >
                                         {renderHotkeyButton(item)}
@@ -508,7 +508,7 @@ export default function Phrases() {
                                                 className={`px-4 h-10 rounded-xl text-sm font-medium transition-colors ${
                                                     isSaving || conflictMessage
                                                         ? 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
-                                                        : 'bg-zinc-900 text-white hover:bg-zinc-800'
+                                                        : 'bg-zinc-900 dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-800 text-white dark:text-zinc-100 hover:bg-zinc-800 dark:hover:bg-black'
                                                 }`}
                                             >
                                                 {isSaving ? '保存中...' : item.isNew ? '添加' : '保存'}
@@ -516,7 +516,7 @@ export default function Phrases() {
                                             <button
                                                 type="button"
                                                 onClick={() => cancelEditing(item)}
-                                                className="px-4 h-10 rounded-xl text-sm font-medium border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                                                className="px-4 h-10 rounded-xl text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                                             >
                                                 取消
                                             </button>
@@ -525,7 +525,7 @@ export default function Phrases() {
                                         <button
                                             type="button"
                                             onClick={() => startEditing(item.id)}
-                                            className="px-4 h-10 rounded-xl text-sm font-medium border border-zinc-200 text-zinc-700 hover:bg-zinc-50 transition-colors"
+                                            className="px-4 h-10 rounded-xl text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                                         >
                                             编辑
                                         </button>
@@ -534,7 +534,7 @@ export default function Phrases() {
                                     <button
                                         type="button"
                                         onClick={() => deletePhrase(item)}
-                                        className="px-4 h-10 rounded-xl text-sm font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                                        className="px-4 h-10 rounded-xl text-sm font-medium border border-zinc-800 bg-zinc-950 text-zinc-300 hover:bg-black transition-colors"
                                     >
                                         删除
                                     </button>

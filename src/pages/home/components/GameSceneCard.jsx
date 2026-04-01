@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { GamingPad, Repeat01, SwitchArrowHorizontal, IMac } from '../../../icons';
 import { useStore } from '../../../components/StoreProvider';
 import DropdownMenu from '../../../components/DropdownMenu';
+import { cardVariants, subtleHover, subtleTap } from '../../../utils/motion';
 
 const GAMES = {
     lol: '英雄联盟',
@@ -41,9 +42,13 @@ export default function GameSceneCard() {
 
     return (
         <motion.div
-            className="relative flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-sm"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="relative h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-sm"
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            custom={2}
+            whileHover={subtleHover}
+            whileTap={subtleTap}
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-sm text-zinc-500">
@@ -58,12 +63,12 @@ export default function GameSceneCard() {
                     <button
                         onClick={toggleDailyMode}
                         className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${isDaily
-                            ? 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
-                            : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                            ? 'bg-zinc-950 text-zinc-100 hover:bg-black border border-zinc-800'
+                            : 'bg-zinc-950 text-zinc-300 hover:bg-black border border-zinc-800'
                             }`}
                     >
                         <span> {isDaily ? '游戏模式' : '日常模式'}</span>
-                        <Repeat01 className="w-4 h-4 text-zinc-600 hover:text-zinc-600 transition-colors" />
+                        <Repeat01 className="w-4 h-4 text-current transition-colors" />
                     </button>
                 </div>
             </div>
@@ -77,7 +82,7 @@ export default function GameSceneCard() {
                     <div className="relative mt-4">
                         <button
                             onClick={() => setShowMenu(true)}
-                            className="w-fit px-5 py-2 rounded-2xl border border-zinc-200 bg-zinc-50 hover:bg-[#EAEAEA] transition-colors text-[18px] font-semibold text-zinc-900 dark:text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                            className="w-fit px-5 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 hover:bg-[#EAEAEA] dark:hover:bg-zinc-900 transition-colors text-[18px] font-semibold text-zinc-900 dark:text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-none"
                         >
                             {gameName}
                         </button>
@@ -92,7 +97,7 @@ export default function GameSceneCard() {
                 )}
                 {isDaily && (
                     <div className="mt-4">
-                        <div className="inline-flex items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-2 text-[18px] font-semibold text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                        <div className="inline-flex items-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-5 py-2 text-[18px] font-semibold text-zinc-900 dark:text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-none">
                             划词翻译
                         </div>
                     </div>

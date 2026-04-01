@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from '../../../components/StoreProvider';
 import DropdownMenu from '../../../components/DropdownMenu';
 import * as FlagIcons from 'country-flag-icons/react/3x2';
+import { cardVariants, subtleHover, subtleTap } from '../../../utils/motion';
 
 const LANGUAGES = {
     zh: {
@@ -44,7 +45,7 @@ const LANGUAGES = {
     }
 };
 
-const resolveProviderRequestUrl = (apiBaseUrl = '', requestMode = 'responses') => {
+const resolveProviderRequestUrl = (apiBaseUrl = '', requestMode = 'chat') => {
     const normalized = apiBaseUrl.trim().replace(/\/+$/, '');
     if (!normalized) {
         return '';
@@ -73,7 +74,7 @@ export default function TranslationDirectionCard() {
                 name: 'Legacy',
                 auth: settings.custom_model.auth,
                 api_base_url: settings.custom_model.api_url,
-                request_mode: 'responses',
+                request_mode: 'chat',
                 model_name: settings.custom_model.model_name
             }]
             : [];
@@ -98,7 +99,7 @@ export default function TranslationDirectionCard() {
                 auth: nextProvider.auth || '',
                 api_url: resolveProviderRequestUrl(
                     nextProvider.api_base_url || '',
-                    nextProvider.request_mode || 'responses'
+                            nextProvider.request_mode || 'chat'
                 ),
                 model_name: nextProvider.model_name || ''
             }
@@ -127,21 +128,25 @@ export default function TranslationDirectionCard() {
         return (
             <button
                 onClick={onClick}
-                className="px-4 py-1.5 rounded-lg bg-zinc-50 hover:bg-[#EAEAEA] transition-colors flex items-center gap-2 shadow-sm"
+                className="px-4 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 hover:bg-[#EAEAEA] dark:hover:bg-zinc-900 transition-colors flex items-center gap-2 shadow-sm border border-transparent dark:border-zinc-800"
             >
                 <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
                     <FlagIcon className="w-7 h-7 scale-[1.8]" />
                 </div>
-                {LANGUAGES[lang].name}
+                <span className="text-zinc-900 dark:text-zinc-100">{LANGUAGES[lang].name}</span>
             </button>
         );
     };
 
     return (
         <motion.div
-            className="relative h-full flex flex-col bg-white rounded-2xl p-5 border border-zinc-200 hover:border-zinc-300 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-sm"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="relative h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.28)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_12px_30px_rgba(0,0,0,0.32)] backdrop-blur-sm"
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            custom={1}
+            whileHover={subtleHover}
+            whileTap={subtleTap}
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-sm text-zinc-500">
@@ -149,7 +154,7 @@ export default function TranslationDirectionCard() {
                     翻译模式
                 </div>
                 <button onClick={handleSwapDirection}>
-                    <Repeat01 className="w-6 h-6 text-zinc-400 hover:text-zinc-600 transition-colors" />
+                    <Repeat01 className="w-6 h-6 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors" />
                 </button>
             </div>
             <div className="flex-1 flex flex-col justify-between mt-3">
@@ -166,7 +171,7 @@ export default function TranslationDirectionCard() {
                         <button
                             type="button"
                             onClick={() => providers.length > 0 && setShowProviderMenu(true)}
-                            className="w-full px-4 py-2.5 rounded-2xl border border-zinc-200 bg-zinc-50/90 hover:bg-zinc-100 transition-all duration-200 text-left text-base font-semibold text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                            className="w-full px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all duration-200 text-left text-base font-semibold text-zinc-900 dark:text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-none"
                         >
                             <div className="flex items-center justify-between gap-3">
                                 <span className="truncate">{currentModelName}</span>
@@ -184,12 +189,14 @@ export default function TranslationDirectionCard() {
                             currentValue={currentProvider?.id || ''}
                             onSelect={handleProviderSelect}
                             className="bottom-full top-auto mb-2 mt-0 min-w-[260px] max-w-[280px]"
-                            renderOption={(providerId, label) => {
+                            renderOption={(providerId, label, isActive) => {
                                 const provider = providers.find((item) => item.id === providerId);
                                 return (
                                     <div className="flex flex-col items-start pr-6">
                                         <span className="truncate">{label}</span>
-                                        <span className="text-xs text-zinc-400 mt-0.5 truncate">
+                                        <span className={`mt-0.5 truncate text-xs ${
+                                            isActive ? 'text-zinc-200 dark:text-zinc-500' : 'text-zinc-400'
+                                        }`}>
                                             {provider?.name || '未命名服务商'}
                                         </span>
                                     </div>
@@ -197,7 +204,7 @@ export default function TranslationDirectionCard() {
                             }}
                         />
                     </div>
-                    <div className="flex items-center gap-3 text-[28px] font-semibold text-zinc-900">
+                    <div className="flex items-center gap-3 text-[28px] font-semibold text-zinc-900 dark:text-white">
                         <div className="relative">
                             {renderLanguageButton(from, () => setShowFromMenu(true))}
                             <DropdownMenu

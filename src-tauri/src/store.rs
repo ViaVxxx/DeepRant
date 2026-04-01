@@ -19,7 +19,7 @@ fn default_provider_id() -> String {
 }
 
 fn default_request_mode() -> String {
-    "responses".to_string()
+    "chat".to_string()
 }
 
 fn is_removed_builtin_model(model_type: &str) -> bool {

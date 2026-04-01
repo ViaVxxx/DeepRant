@@ -6,51 +6,53 @@ import { useStore } from '../components/StoreProvider';
 import { showSuccess, showError } from '../utils/toast';
 import { log, logError } from '../utils/log';
 import DropdownMenu from '../components/DropdownMenu';
+import { cardVariants } from '../utils/motion';
 
 const DEFAULT_PROVIDER = {
     id: 'provider-default',
     name: '自定义服务商',
     auth: '',
     api_base_url: '',
-    request_mode: 'responses',
+    request_mode: 'chat',
     model_name: ''
 };
 
 const REQUEST_MODE_OPTIONS = [
-    { id: 'responses', label: 'Responses' },
-    { id: 'chat', label: 'Chat' }
+    { id: 'chat', label: 'Chat' },
+    { id: 'responses', label: 'Responses' }
 ];
 
 const normalizeProviderApiInput = (value = '', ensureVersion = false) => {
-    const trimmed = value.trim().replace(/\/+$/, '');
+    const trimmed = value.trim();
     if (!trimmed) {
         return { apiBaseUrl: '', requestMode: null };
     }
 
-    const lower = trimmed.toLowerCase();
+    const normalized = trimmed.replace(/\/+$/, '');
+    const lower = normalized.toLowerCase();
     if (lower.endsWith('/responses')) {
         return {
-            apiBaseUrl: trimmed.slice(0, -'/responses'.length),
+            apiBaseUrl: normalized.slice(0, -'/responses'.length),
             requestMode: 'responses'
         };
     }
 
     if (lower.endsWith('/chat/completions')) {
         return {
-            apiBaseUrl: trimmed.slice(0, -'/chat/completions'.length),
+            apiBaseUrl: normalized.slice(0, -'/chat/completions'.length),
             requestMode: 'chat'
         };
     }
 
     if (!ensureVersion || lower.endsWith('/v1')) {
         return {
-            apiBaseUrl: trimmed,
+            apiBaseUrl: normalized,
             requestMode: null
         };
     }
 
     return {
-        apiBaseUrl: `${trimmed}/v1`,
+        apiBaseUrl: `${normalized}/v1`,
         requestMode: null
     };
 };
@@ -178,6 +180,7 @@ export default function Settings() {
     const [customProviderModels, setCustomProviderModels] = useState([]);
     const [showModelMenu, setShowModelMenu] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
+    const [providerApiInput, setProviderApiInput] = useState('');
 
     const providers = useMemo(() => {
         if (settings?.custom_providers?.length) {
@@ -198,6 +201,10 @@ export default function Settings() {
         setCustomProviderModels([]);
         setShowApiKey(false);
     }, [selectedProvider.id, selectedProvider.api_base_url, selectedProvider.auth]);
+
+    useEffect(() => {
+        setProviderApiInput(selectedProvider.api_base_url || '');
+    }, [selectedProvider.id, selectedProvider.api_base_url]);
 
     const resolvedRequestUrl = useMemo(
         () => resolveApiRequestUrl(selectedProvider.api_base_url, selectedProvider.request_mode),
@@ -245,10 +252,15 @@ export default function Settings() {
 
     const handleProviderApiUrlChange = async (value, ensureVersion = false) => {
         const normalized = normalizeProviderApiInput(value, ensureVersion);
+        setProviderApiInput(ensureVersion ? normalized.apiBaseUrl : value);
         await updateSelectedProvider({
             api_base_url: normalized.apiBaseUrl,
             ...(normalized.requestMode ? { request_mode: normalized.requestMode } : {})
         });
+    };
+
+    const commitProviderApiUrl = async (ensureVersion = true) => {
+        await handleProviderApiUrlChange(providerApiInput, ensureVersion);
     };
 
     const handleSelectRequestMode = async (requestMode) => {
@@ -290,12 +302,24 @@ export default function Settings() {
     };
 
     const handleFetchCustomModels = async () => {
-        if (!selectedProvider.auth) {
+        const normalized = normalizeProviderApiInput(providerApiInput, true);
+        const effectiveProvider = {
+            ...selectedProvider,
+            api_base_url: normalized.apiBaseUrl,
+            request_mode: normalized.requestMode || selectedProvider.request_mode,
+        };
+        await updateSelectedProvider({
+            api_base_url: effectiveProvider.api_base_url,
+            ...(normalized.requestMode ? { request_mode: normalized.requestMode } : {})
+        });
+        setProviderApiInput(effectiveProvider.api_base_url);
+
+        if (!effectiveProvider.auth) {
             showError('请先填写 API Key');
             return;
         }
 
-        if (!selectedProvider.api_base_url) {
+        if (!effectiveProvider.api_base_url) {
             showError('请先填写请求地址');
             return;
         }
@@ -303,13 +327,13 @@ export default function Settings() {
         setIsFetchingModels(true);
         try {
             await log('开始拉取服务商模型列表', {
-                providerName: selectedProvider.name,
-                apiBaseUrl: selectedProvider.api_base_url
+                providerName: effectiveProvider.name,
+                apiBaseUrl: effectiveProvider.api_base_url
             });
 
             const models = await invoke('fetch_custom_models', {
-                apiUrl: selectedProvider.api_base_url,
-                auth: selectedProvider.auth
+                apiUrl: effectiveProvider.api_base_url,
+                auth: effectiveProvider.auth
             });
 
             setCustomProviderModels(models);
@@ -331,17 +355,29 @@ export default function Settings() {
     };
 
     const handleTestConnection = async () => {
-        if (!selectedProvider.auth) {
+        const normalized = normalizeProviderApiInput(providerApiInput, true);
+        const effectiveProvider = {
+            ...selectedProvider,
+            api_base_url: normalized.apiBaseUrl,
+            request_mode: normalized.requestMode || selectedProvider.request_mode,
+        };
+        await updateSelectedProvider({
+            api_base_url: effectiveProvider.api_base_url,
+            ...(normalized.requestMode ? { request_mode: normalized.requestMode } : {})
+        });
+        setProviderApiInput(effectiveProvider.api_base_url);
+
+        if (!effectiveProvider.auth) {
             showError('请输入 API Key');
             return;
         }
 
-        if (!selectedProvider.api_base_url) {
+        if (!effectiveProvider.api_base_url) {
             showError('请输入请求地址');
             return;
         }
 
-        if (!selectedProvider.model_name) {
+        if (!effectiveProvider.model_name) {
             showError('请输入模型名称');
             return;
         }
@@ -349,11 +385,11 @@ export default function Settings() {
         setIsTestingConnection(true);
         try {
             await log('开始测试自定义服务商连接', {
-                providerName: selectedProvider.name,
-                requestUrl: resolvedRequestUrl,
-                modelName: selectedProvider.model_name
+                providerName: effectiveProvider.name,
+                requestUrl: resolveApiRequestUrl(effectiveProvider.api_base_url, effectiveProvider.request_mode),
+                modelName: effectiveProvider.model_name
             });
-            const result = await testOpenAIConnection(selectedProvider);
+            const result = await testOpenAIConnection(effectiveProvider);
             if (result) {
                 showSuccess('API 连接测试成功！');
             }
@@ -370,20 +406,21 @@ export default function Settings() {
         <div className="h-full flex flex-col gap-6">
             <motion.div
                 className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                custom={0}
             >
                 <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">AI模型设置</h1>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                    支持多个自定义服务商配置，请求地址输入到 <span className="font-mono">/v1</span> 即可。
-                </p>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-[360px_minmax(0,1fr)] gap-6">
                 <motion.div
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    variants={cardVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={1}
                 >
                     <div className="flex items-center justify-between gap-3 mb-6">
                         <div className="flex items-center gap-3 text-sm text-zinc-500">
@@ -393,7 +430,7 @@ export default function Settings() {
                         <button
                             type="button"
                             onClick={handleAddProvider}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-800 text-white dark:text-zinc-100 hover:bg-zinc-800 dark:hover:bg-black transition-colors"
                         >
                             添加服务商
                         </button>
@@ -407,7 +444,7 @@ export default function Settings() {
                                     key={provider.id}
                                     className={`rounded-xl border transition-colors ${
                                         isActive
-                                            ? 'border-zinc-900 bg-zinc-50'
+                                            ? 'border-zinc-900 bg-zinc-900 shadow-[0_6px_18px_rgba(0,0,0,0.12)] dark:border-white dark:bg-white'
                                             : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
                                     }`}
                                 >
@@ -418,15 +455,23 @@ export default function Settings() {
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                                                <div className={`text-sm font-medium truncate ${
+                                                    isActive ? 'text-white dark:text-zinc-900' : 'text-zinc-800 dark:text-zinc-200'
+                                                }`}>
                                                     {provider.name || '未命名服务商'}
                                                 </div>
-                                                <div className="mt-1 text-xs text-zinc-400 font-mono truncate">
+                                                <div className={`mt-1 text-xs font-mono truncate ${
+                                                    isActive ? 'text-zinc-300 dark:text-zinc-500' : 'text-zinc-400'
+                                                }`}>
                                                     {provider.api_base_url || '等待填写 /v1 地址'}
                                                 </div>
-                                                <div className="mt-2 flex items-center gap-1 px-2 py-0.5 w-fit bg-zinc-100 dark:bg-zinc-800 rounded-md">
-                                                    <Cube className="w-3.5 h-3.5 stroke-zinc-500" />
-                                                    <span className="text-xs text-zinc-500">
+                                                <div className={`mt-2 flex items-center gap-1 px-2 py-0.5 w-fit rounded-md ${
+                                                    isActive ? 'bg-white/10 dark:bg-zinc-100' : 'bg-zinc-100 dark:bg-zinc-800'
+                                                }`}>
+                                                    <Cube className={`w-3.5 h-3.5 ${isActive ? 'stroke-zinc-200 dark:stroke-zinc-500' : 'stroke-zinc-500'}`} />
+                                                    <span className={`text-xs ${
+                                                        isActive ? 'text-zinc-100 dark:text-zinc-600' : 'text-zinc-500'
+                                                    }`}>
                                                         {provider.model_name || '未设置模型'}
                                                     </span>
                                                 </div>
@@ -439,8 +484,8 @@ export default function Settings() {
                                                 }}
                                                 className={`shrink-0 px-2 py-1 rounded-md text-xs transition-colors ${
                                                     providers.length <= 1
-                                                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                                        ? 'bg-zinc-100 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                                                        : 'bg-zinc-100 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-black'
                                                 }`}
                                                 disabled={providers.length <= 1}
                                             >
@@ -456,9 +501,10 @@ export default function Settings() {
 
                 <motion.div
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
+                    variants={cardVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={2}
                 >
                     <div className="flex items-center gap-3 text-sm text-zinc-500 mb-6">
                         <Server className="w-5 h-5 stroke-zinc-500" />
@@ -508,8 +554,8 @@ export default function Settings() {
                                             onClick={() => handleSelectRequestMode(option.id)}
                                             className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
                                                 selectedProvider.request_mode === option.id
-                                                    ? 'bg-zinc-900 text-white'
-                                                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                                    ? 'border border-zinc-900 bg-zinc-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-white dark:bg-white dark:text-zinc-900'
+                                                    : 'bg-zinc-100 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-black'
                                             }`}
                                         >
                                             {option.label}
@@ -519,20 +565,22 @@ export default function Settings() {
                             </div>
                             <input
                                 type="text"
-                                value={selectedProvider.api_base_url || ''}
-                                onChange={(event) => handleProviderApiUrlChange(event.target.value)}
-                                onBlur={(event) => handleProviderApiUrlChange(event.target.value, true)}
+                                value={providerApiInput}
+                                onChange={(event) => setProviderApiInput(event.target.value)}
+                                onBlur={() => {
+                                    void commitProviderApiUrl(true);
+                                }}
                                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-300"
                                 placeholder="例如：https://your-provider.example.com/v1"
                             />
                             <p className="mt-2 text-xs text-zinc-400">
-                                这里只保留到 <span className="font-mono">/v1</span>。当前实际请求地址：
+                                请求地址：
                                 <span className="font-mono ml-1 break-all">{resolvedRequestUrl || '等待填写'}</span>
                             </p>
                         </div>
 
                         <div>
-                            <label className="block text-sm text-zinc-500 mb-2">Model Name</label>
+                            <label className="block text-sm text-zinc-500 mb-2">模型名称</label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <button
@@ -553,13 +601,15 @@ export default function Settings() {
                                         currentValue={selectedProvider.model_name || ''}
                                         onSelect={handleSelectCustomModel}
                                         className="top-full bottom-auto mt-2 mb-0 max-h-[280px] overflow-y-auto min-w-full"
-                                        renderOption={(value) => {
+                                        renderOption={(value, _label, isActive) => {
                                             const currentModel = customProviderModels.find((item) => item.id === value);
                                             return (
                                                 <div className="flex flex-col items-start">
                                                     <span>{value}</span>
                                                     {currentModel?.owned_by && (
-                                                        <span className="text-xs text-zinc-400 mt-0.5">
+                                                        <span className={`mt-0.5 text-xs ${
+                                                            isActive ? 'text-zinc-200 dark:text-zinc-500' : 'text-zinc-400'
+                                                        }`}>
                                                             {currentModel.owned_by}
                                                         </span>
                                                     )}
@@ -574,11 +624,11 @@ export default function Settings() {
                                     onClick={handleFetchCustomModels}
                                     className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                                         isFetchingModels
-                                            ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                            : 'bg-zinc-900 text-white hover:bg-zinc-800'
+                                            ? 'bg-zinc-100 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                                            : 'bg-zinc-900 dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-800 text-white dark:text-zinc-100 hover:bg-zinc-800 dark:hover:bg-black'
                                     }`}
                                 >
-                                    {isFetchingModels ? '拉取中...' : '拉取模型'}
+                                    {isFetchingModels ? '获取中...' : '获取模型'}
                                 </button>
                             </div>
                             <input
@@ -586,22 +636,19 @@ export default function Settings() {
                                 value={selectedProvider.model_name || ''}
                                 onChange={(event) => updateSelectedProvider({ model_name: event.target.value })}
                                 className="w-full mt-2 px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-300"
-                                placeholder="也可以手动输入模型名，例如：服务商返回的模型名"
+                                placeholder="输入自定义模型名称"
                             />
                         </div>
 
                         <div className="pt-2 flex items-center justify-between gap-4">
-                            <p className="text-xs text-zinc-400">
-                                模型列表会从 <span className="font-mono">{selectedProvider.api_base_url || '/v1'}/models</span> 拉取。
-                            </p>
                             <button
                                 type="button"
                                 onClick={handleTestConnection}
                                 disabled={isTestingConnection}
-                                className={`px-3 py-1.5 text-xs text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-lg transition-all flex items-center gap-2 ${
+                                className={`px-3 py-1.5 text-xs text-white bg-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 dark:border dark:border-zinc-800 rounded-lg transition-all flex items-center gap-2 ${
                                     isTestingConnection
                                         ? 'opacity-70 cursor-not-allowed'
-                                        : 'hover:bg-zinc-800 dark:hover:bg-zinc-200'
+                                        : 'hover:bg-zinc-800 dark:hover:bg-black'
                                 }`}
                             >
                                 {isTestingConnection ? '测试中...' : '测试连接'}

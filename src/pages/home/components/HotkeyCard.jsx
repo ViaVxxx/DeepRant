@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { showSuccess, showError } from '../../../utils/toast';
 import { log, logError } from '../../../utils/log';
 import { formatPressedKeys, getKeyName } from '../../../utils/hotkeys';
+import { cardVariants, continuousSpin, subtleHover, subtleTap } from '../../../utils/motion';
 
 export default function HotkeyCard() {
     const [isRecording, setIsRecording] = useState(false);
@@ -101,7 +102,7 @@ export default function HotkeyCard() {
                         className="flex items-center justify-center"
                         initial={{ rotate: 0 }}
                         animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1 }}
+                        transition={continuousSpin}
                     >
                         <Spinner className="w-6 h-6 text-zinc-400" />
                     </motion.div>
@@ -117,9 +118,12 @@ export default function HotkeyCard() {
         <motion.button
             onClick={startRecording}
             className="h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-sm"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            custom={3}
+            whileHover={subtleHover}
+            whileTap={subtleTap}
         >
             <div className="flex items-center gap-3 text-sm text-zinc-500">
                 <KeyboardAlt className="w-6 h-6 stroke-zinc-500" />

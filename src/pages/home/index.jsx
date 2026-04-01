@@ -1,94 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import TranslationDirectionCard from './components/TranslationDirectionCard';
 import GameSceneCard from './components/GameSceneCard';
 import HotkeyCard from './components/HotkeyCard';
 import TranslationModeCard from './components/TranslationModeCard';
-import demoVideo from '../../assets/demovideo-lite.mp4';
+import { cardVariants } from '../../utils/motion';
 
 export default function Home() {
-    const [isSettingHotkey, setIsSettingHotkey] = useState(false);
-    const videoRef = useRef(null);
-
-    useEffect(() => {
-        if (!videoRef.current) {
-            return;
-        }
-
-        const currentVideo = videoRef.current;
-        currentVideo.playbackRate = 1.0;
-        currentVideo.defaultPlaybackRate = 1.0;
-
-        const syncPlaybackWithVisibility = () => {
-            if (!currentVideo) {
-                return;
-            }
-
-            if (document.hidden) {
-                currentVideo.pause();
-                return;
-            }
-
-            currentVideo.play().catch(() => undefined);
-        };
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        currentVideo.play().catch(() => undefined);
-                    } else {
-                        currentVideo.pause();
-                    }
-                });
-            },
-            { threshold: 0.5 }
-        );
-
-        observer.observe(currentVideo);
-        document.addEventListener('visibilitychange', syncPlaybackWithVisibility);
-
-        return () => {
-            observer.disconnect();
-            document.removeEventListener('visibilitychange', syncPlaybackWithVisibility);
-            currentVideo.pause();
-        };
-    }, []);
-
     return (
         <div className="h-full flex flex-col gap-4">
-            {/* 演示视频区域 */}
             <motion.div
-                className="w-full bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                className="w-full min-h-[148px] md:min-h-[164px] rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-7 py-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.28)] backdrop-blur-sm transition-colors duration-300"
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                custom={0}
             >
-                <div className="relative w-full" style={{ paddingTop: 'calc(100% / 7.5)' }}>
-                    <video
-                        ref={videoRef}
-                        className="absolute top-0 left-0 w-full h-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="metadata"
-                    >
-                        <source src={demoVideo} type="video/mp4" />
-                    </video>
+                <div className="flex h-full min-h-[100px] flex-col justify-center">
+                    <div className="text-xs font-medium tracking-[0.32em] text-zinc-400">
+                        主页
+                    </div>
+                    <h1 className="mt-3 text-[48px] font-semibold leading-none tracking-[-0.04em] text-zinc-900 dark:text-white md:text-[72px]">
+                        DeepRant
+                    </h1>
+                    <p className="mt-3 max-w-[560px] text-sm leading-6 text-zinc-500 dark:text-zinc-400 md:text-base">
+                        快捷翻译、常用语与自定义服务商配置，面向国际服游戏沟通场景。
+                    </p>
                 </div>
             </motion.div>
 
-            {/* 卡片网格 */}
-            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 md:grid-rows-[auto_1fr] gap-4">
-                <div className="md:row-span-2">
+            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(0,1.14fr)_minmax(0,0.93fr)_minmax(0,0.93fr)] md:grid-rows-[minmax(210px,0.78fr)_minmax(0,1.12fr)] gap-4 items-stretch">
+                <div className="md:row-span-2 min-h-0 h-full">
                     <TranslationDirectionCard />
                 </div>
                 <GameSceneCard />
-                <HotkeyCard
-                    isSettingHotkey={isSettingHotkey}
-                    onSetHotkey={() => setIsSettingHotkey(true)}
-                />
-                <div className="md:col-span-2 h-full">
+                <HotkeyCard />
+                <div className="md:col-span-2 min-h-0 h-full">
                     <TranslationModeCard />
                 </div>
             </div>

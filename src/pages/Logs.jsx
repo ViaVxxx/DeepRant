@@ -6,6 +6,7 @@ import { Server, Dock } from '../icons';
 import { useStore } from '../components/StoreProvider';
 import { showError, showSuccess } from '../utils/toast';
 import { log, logError } from '../utils/log';
+import { cardVariants } from '../utils/motion';
 
 const LOG_LEVEL_OPTIONS = [
     {
@@ -154,20 +155,21 @@ export default function Logs() {
         <div className="h-full min-h-0 flex flex-col gap-6">
             <motion.div
                 className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                custom={0}
             >
                 <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">日志</h1>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                    日志默认保存到应用安装目录的 <span className="font-mono">/logs</span> 文件夹，也可以按需改成自定义目录。
-                </p>
             </motion.div>
 
             <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <motion.div
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    variants={cardVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={1}
                 >
                     <div className="flex items-center gap-3 text-sm text-zinc-500 mb-6">
                         <Server className="w-5 h-5 stroke-zinc-500" />
@@ -213,13 +215,13 @@ export default function Logs() {
                                         onClick={() => handleChangeLogLevel(option.id)}
                                         className={`text-left px-3 py-3 rounded-xl border transition-colors ${
                                             configuredLogLevel === option.id
-                                                ? 'border-zinc-900 bg-zinc-900 text-white'
+                                                ? 'border-zinc-900 bg-zinc-900 text-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-white dark:bg-white dark:text-zinc-900'
                                                 : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                                         }`}
                                     >
                                         <div className="text-sm font-medium">{option.name}</div>
                                         <div className={`mt-1 text-xs ${
-                                            configuredLogLevel === option.id ? 'text-zinc-200' : 'text-zinc-400'
+                                            configuredLogLevel === option.id ? 'text-zinc-200 dark:text-zinc-500' : 'text-zinc-400'
                                         }`}>
                                             {option.description}
                                         </div>
@@ -242,8 +244,8 @@ export default function Logs() {
                                 disabled={isSaving}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                     isSaving
-                                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                        : 'bg-zinc-900 text-white hover:bg-zinc-800'
+                                        ? 'bg-zinc-100 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                                        : 'bg-zinc-900 dark:bg-zinc-950 border border-zinc-900 dark:border-zinc-800 text-white dark:text-zinc-100 hover:bg-zinc-800 dark:hover:bg-black'
                                 }`}
                             >
                                 保存目录
@@ -254,8 +256,8 @@ export default function Logs() {
                                 disabled={isSaving || !hasCustomDirectory}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                     isSaving || !hasCustomDirectory
-                                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                                        ? 'bg-zinc-100 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                                        : 'bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-black'
                                 }`}
                             >
                                 恢复默认
@@ -263,7 +265,7 @@ export default function Logs() {
                             <button
                                 type="button"
                                 onClick={handleOpenDirectory}
-                                className="px-3 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
+                                className="px-3 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-black transition-colors"
                             >
                                 打开目录
                             </button>
@@ -273,8 +275,8 @@ export default function Logs() {
                                 disabled={isLoadingLogs}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                     isLoadingLogs
-                                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                                        ? 'bg-zinc-100 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                                        : 'bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-black'
                                 }`}
                             >
                                 {isLoadingLogs ? '加载中...' : hasLoadedLogs ? '刷新日志' : '加载日志'}
@@ -285,9 +287,10 @@ export default function Logs() {
 
                 <motion.div
                     className="flex flex-col min-h-0 bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] backdrop-blur-sm overflow-hidden"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
+                    variants={cardVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={2}
                 >
                     <div className="flex items-center gap-3 text-sm text-zinc-500 mb-6">
                         <Dock className="w-5 h-5 stroke-zinc-500" />
