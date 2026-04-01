@@ -73,7 +73,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGQTNBQTkyRkIxQzRGOUMKUldTY1R4ejdrcXFqSDZ1RUs5eDE4Sm5VZXdvZjhIajZoQnE5OHlGUmdjVjF6a2ZqR2dFUUE2cncK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYwM0I4OEE0NjE3NTlEOTAKUldTUW5YVmhwSWc3OEQzYlVZamF5Vk1qeFd6TkJkZm1sQmlIS1JjMmJ1cnV2Qm13QjhvZVkzK2EK",
       "endpoints": [
         "https://github.com/ViaVxxx/DeepRant/releases/latest/download/latest.json"
       ],
